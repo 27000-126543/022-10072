@@ -1,0 +1,85 @@
+@use '@/styles/variables.scss' as *;
+
+.list {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-sm $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  padding: $spacing-md 0;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: $radius-sm;
+  border: 2rpx solid $color-border;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all $transition-base;
+
+  &.checked {
+    background-color: $color-primary;
+    border-color: $color-primary;
+
+    &::after {
+      content: '✓';
+      color: $color-text-white;
+      font-size: 24rpx;
+      font-weight: $font-weight-bold;
+    }
+  }
+}
+
+.content {
+  flex: 1;
+  margin-left: $spacing-md;
+  min-width: 0;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: 6rpx;
+}
+
+.name {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.required {
+  font-size: $font-size-xs;
+  color: $color-error;
+  background-color: $color-error-light;
+  padding: 2rpx 10rpx;
+  border-radius: $radius-xs;
+}
+
+.optional {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  background-color: $color-bg-page;
+  padding: 2rpx 10rpx;
+  border-radius: $radius-xs;
+}
+
+.desc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+}

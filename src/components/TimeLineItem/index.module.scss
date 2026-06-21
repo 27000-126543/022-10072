@@ -1,0 +1,161 @@
+@use '@/styles/variables.scss' as *;
+
+.timelineItem {
+  display: flex;
+  position: relative;
+  padding-left: 56rpx;
+  padding-bottom: $spacing-lg;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.timelineLine {
+  position: absolute;
+  left: 15rpx;
+  top: 0;
+  bottom: -$spacing-lg;
+  width: 2rpx;
+  background-color: $color-border;
+
+  .timelineItem:last-child & {
+    display: none;
+  }
+}
+
+.timelineDot {
+  position: absolute;
+  left: 0;
+  top: 8rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  border: 4rpx solid $color-bg-page;
+  z-index: 1;
+
+  &.normal { background-color: $color-status-normal; }
+  &.warning { background-color: $color-status-warning; }
+  &.danger { background-color: $color-status-danger; }
+}
+
+.card {
+  flex: 1;
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.typeLabel {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.timestamp {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.cardBody {
+  padding: $spacing-md $spacing-lg;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8rpx 0;
+
+  &.withPhoto {
+    margin-bottom: $spacing-md;
+  }
+}
+
+.infoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.infoValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  text-align: right;
+  max-width: 60%;
+  @include text-ellipsis;
+}
+
+.photoWrap {
+  width: 100%;
+  height: 280rpx;
+  border-radius: $radius-md;
+  overflow: hidden;
+  margin-top: $spacing-sm;
+}
+
+.photo {
+  width: 100%;
+  height: 100%;
+  border-radius: $radius-md;
+}
+
+.remark {
+  margin-top: $spacing-sm;
+  padding-top: $spacing-md;
+  border-top: 1rpx dashed $color-divider;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+}
+
+.slumpBar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin: $spacing-sm 0;
+  padding: $spacing-md;
+  background-color: $color-bg-input;
+  border-radius: $radius-md;
+}
+
+.slumpValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+}
+
+.slumpStandard {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.tag {
+  display: inline-block;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  margin-right: 8rpx;
+
+  &.segregation {
+    background-color: $color-warning-light;
+    color: $color-warning;
+  }
+  &.noSegregation {
+    background-color: $color-success-light;
+    color: $color-success;
+  }
+}
