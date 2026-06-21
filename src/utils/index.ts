@@ -53,13 +53,20 @@ export const getRecordTypeText = (type: string): string => {
 
 export const evaluateSlumpStatus = (
   value: number,
-  standard: string = '160±20mm'
+  standard: string = '160±20mm',
+  isSegregation: boolean = false
 ): RecordStatus => {
   const match = standard.match(/(\d+)±(\d+)mm/)
-  if (!match) return 'normal'
+  if (!match) return isSegregation ? 'warning' : 'normal'
   const target = parseInt(match[1])
   const tolerance = parseInt(match[2])
   const diff = Math.abs(value - target)
+
+  if (isSegregation) {
+    if (diff <= tolerance) return 'warning'
+    return 'danger'
+  }
+
   if (diff <= tolerance) return 'normal'
   if (diff <= tolerance * 1.5) return 'warning'
   return 'danger'

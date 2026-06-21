@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react'
-import { View, Text, Input, Textarea, Picker, Button, ScrollView } from '@tarojs/components'
+import { View, Text, Input, Textarea, Picker, Button, ScrollView, Image } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
 import SignaturePad from '@/components/SignaturePad'
+import StatusBadge from '@/components/StatusBadge'
 import { usePouringStore } from '@/store/pouringStore'
 import { WEATHER_OPTIONS } from '@/types/pouring'
-import { MOCK_PROCESS_RECORDS } from '@/data/mock'
-import { formatDateTime, getCurrentDateTime } from '@/utils'
+import { formatDateTime, getCurrentDateTime, getRecordTypeText } from '@/utils'
 
 const SignArchivePage: React.FC = () => {
   const {
@@ -20,20 +20,18 @@ const SignArchivePage: React.FC = () => {
   } = usePouringStore()
 
   const [showSign, setShowSign] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
-
-  const displayRecords = processRecords.length > 0 ? processRecords : MOCK_PROCESS_RECORDS
+  const [showReport, setShowReport] = useState(false)
 
   useDidShow(() => {
-    console.log('[SignArchivePage] Page shown, isTaskCreated:', isTaskCreated, 'records:', displayRecords.length)
+    console.log('[SignArchivePage] Page shown, isTaskCreated:', isTaskCreated, 'records:', processRecords.length)
   })
 
   const stats = useMemo(() => {
-    const total = displayRecords.length
-    const trucks = displayRecords.filter(r => r.type === 'truck').length
-    const abnormal = displayRecords.filter(r => r.status !== 'normal').length
+    const total = processRecords.length
+    const trucks = processRecords.filter(r => r.type === 'truck').length
+    const abnormal = processRecords.filter(r => r.status !== 'normal').length
     return { total, trucks, abnormal }
-  }, [displayRecords])
+  }, [processRecords])
 
   const canGenerate = useMemo(() => {
     if (!pouringInfo) return false
@@ -66,6 +64,15 @@ const SignArchivePage: React.FC = () => {
       return
     }
 
+    if (processRecords.length === 0) {
+      Taro.showToast({
+        title: '暂无过程记录，无法生成报告',
+        icon: 'none',
+        duration: 2000,
+      })
+      return
+    }
+
     if (!archiveInfo?.signature?.workerSignatureUrl) {
       await submitArchive({
         worker: archiveInfo?.signature?.worker || '施工员',
@@ -74,15 +81,15 @@ const SignArchivePage: React.FC = () => {
     }
 
     Taro.showLoading({ title: '生成记录中...', mask: true })
-    await new Promise(r => setTimeout(r, 1500))
+    await new Promise(r => setTimeout(r, 1000))
     Taro.hideLoading()
 
-    setShowSuccess(true)
-    console.log('[SignArchivePage] Report generated successfully, records:', stats.total)
+    setShowReport(true)
+    console.log('[SignArchivePage] Report generated, records:', stats.total)
   }
 
   const handleBackHome = () => {
-    setShowSuccess(false)
+    setShowReport(false)
     usePouringStore.getState().resetAll()
     Taro.switchTab({ url: '/pages/pour-info/index' })
   }
@@ -284,40 +291,209 @@ const SignArchivePage: React.FC = () => {
         onConfirm={handleSignConfirm}
       />
 
-      {showSuccess && (
-        <View className={styles.successOverlay}>
-          <View className={styles.successCard}>
-            <View className={styles.successIcon}>✓</View>
-            <Text className={styles.successTitle}>旁站记录生成成功！</Text>
-            <Text className={styles.successDesc}>
-              记录已包含照片、时间戳和位置信息，{'\n'}可提交监理资料归档。
+      {showReport && (
+        <View className={styles.reportOverlay}>
+          <View className={styles.reportHeader}>
+            <Text className={styles.reportHeaderTitle}>旁站记录详情</Text>
+            <View className={styles.reportClose} onClick={() => setShowReport(false)}>×</View>
+          </View>
+
+          <ScrollView scrollY className={styles.reportBody}>
+            <Text className={styles.reportTitle}>混凝土浇筑旁站记录</Text>
+            <Text className={styles.reportSubtitle}>
+              任务编号：{pouringInfo?.taskCode} · 生成时间：{formatDateTime(new Date()).slice(0, 16)}
             </Text>
-            <View className={styles.successInfo}>
-              <View className={styles.infoRow}>
-                <Text className={styles.infoKey}>任务编号</Text>
-                <Text className={styles.infoVal}>{pouringInfo?.taskCode}</Text>
-              </View>
-              <View className={styles.infoRow}>
-                <Text className={styles.infoKey}>记录数</Text>
-                <Text className={styles.infoVal}>{stats.total} 条过程记录</Text>
-              </View>
-              <View className={styles.infoRow}>
-                <Text className={styles.infoKey}>生成时间</Text>
-                <Text className={styles.infoVal}>{formatDateTime(new Date()).slice(5, 16)}</Text>
-              </View>
-              <View className={styles.infoRow}>
-                <Text className={styles.infoKey}>签字状态</Text>
-                <Text className={styles.infoVal} style={{ color: '#16A34A' }}>✓ 双签已完成</Text>
+
+            <View className={styles.reportSection}>
+              <Text className={styles.reportSectionTitle}>工程基本信息</Text>
+              <View className={styles.reportInfoGrid}>
+                <View className={styles.reportInfoItem}>
+                  <Text className={styles.reportInfoLabel}>楼栋</Text>
+                  <Text className={styles.reportInfoValue}>{pouringInfo?.building}</Text>
+                </View>
+                <View className={styles.reportInfoItem}>
+                  <Text className={styles.reportInfoLabel}>轴线</Text>
+                  <Text className={styles.reportInfoValue}>{pouringInfo?.axis}</Text>
+                </View>
+                <View className={styles.reportInfoItem}>
+                  <Text className={styles.reportInfoLabel}>构件部位</Text>
+                  <Text className={styles.reportInfoValue}>{pouringInfo?.component}</Text>
+                </View>
+                <View className={styles.reportInfoItem}>
+                  <Text className={styles.reportInfoLabel}>强度等级</Text>
+                  <Text className={styles.reportInfoValue}>{pouringInfo?.strengthGrade}</Text>
+                </View>
+                <View className={styles.reportInfoItem}>
+                  <Text className={styles.reportInfoLabel}>计划方量</Text>
+                  <Text className={styles.reportInfoValue}>{pouringInfo?.plannedVolume} m³</Text>
+                </View>
+                <View className={styles.reportInfoItem}>
+                  <Text className={styles.reportInfoLabel}>实际完成</Text>
+                  <Text className={styles.reportInfoValue}>{archiveInfo?.completedVolume || 0} m³</Text>
+                </View>
+                <View className={styles.reportInfoItem}>
+                  <Text className={styles.reportInfoLabel}>开盘时间</Text>
+                  <Text className={styles.reportInfoValue}>{pouringInfo?.startTime}</Text>
+                </View>
+                <View className={styles.reportInfoItem}>
+                  <Text className={styles.reportInfoLabel}>天气 / 温度</Text>
+                  <Text className={styles.reportInfoValue}>
+                    {archiveInfo?.weather || '晴'} / {archiveInfo?.temperature || '-'}
+                  </Text>
+                </View>
               </View>
             </View>
-            <View className={styles.successActions}>
-              <Button className={styles.secondaryAction} onClick={() => setShowSuccess(false)}>
-                关闭
-              </Button>
-              <Button className={styles.primaryAction} onClick={handleBackHome}>
-                开始新任务
-              </Button>
+
+            <View className={styles.reportSection}>
+              <Text className={styles.reportSectionTitle}>过程记录时间线</Text>
+              <View className={styles.reportTimeline}>
+                <View className={styles.reportTimelineLine} />
+                {processRecords.map((record, idx) => (
+                  <View key={record.id} className={styles.reportTimelineItem}>
+                    <View className={classnames(styles.reportTimelineDot, styles[record.status])} />
+                    <View className={styles.reportTimelineCard}>
+                      <View className={styles.reportTimelineHead}>
+                        <View style={{ display: 'flex', alignItems: 'center', gap: '16rpx' }}>
+                          <Text className={styles.reportTimelineType}>
+                            {idx + 1}. {getRecordTypeText(record.type)}
+                          </Text>
+                          <StatusBadge status={record.status} />
+                        </View>
+                        <Text className={styles.reportTimelineTime}>
+                          {record.timestamp.slice(5, 16)}
+                        </Text>
+                      </View>
+
+                      {record.type === 'truck' && (
+                        <>
+                          {record.photoUrl && (
+                            <View className={styles.reportTimelinePhoto}>
+                              <Image
+                                className={styles.reportTimelinePhotoImg}
+                                src={record.photoUrl}
+                                mode="aspectFill"
+                              />
+                            </View>
+                          )}
+                          <View className={styles.reportInfoRow}>
+                            <Text className={styles.reportInfoRowKey}>车次</Text>
+                            <Text className={styles.reportInfoRowVal}>第{record.truckBatch}车</Text>
+                          </View>
+                          <View className={styles.reportInfoRow}>
+                            <Text className={styles.reportInfoRowKey}>车牌号</Text>
+                            <Text className={styles.reportInfoRowVal}>{record.truckNumber}</Text>
+                          </View>
+                          <View className={styles.reportInfoRow}>
+                            <Text className={styles.reportInfoRowKey}>到场时间</Text>
+                            <Text className={styles.reportInfoRowVal}>{record.arrivalTime}</Text>
+                          </View>
+                        </>
+                      )}
+
+                      {record.type === 'slump' && (
+                        <>
+                          <View className={styles.reportSlumpBar}>
+                            <Text className={classnames(styles.reportSlumpValue, styles[record.status])}>
+                              {record.slumpValue} mm
+                            </Text>
+                            <Text className={styles.reportSlumpStandard}>
+                              标准：{record.slumpStandard}
+                            </Text>
+                          </View>
+                          <View className={styles.reportInfoRow}>
+                            <Text className={styles.reportInfoRowKey}>离析情况</Text>
+                            <Text className={styles.reportInfoRowVal}>
+                              {record.isSegregation ? '存在离析' : '无离析，正常'}
+                            </Text>
+                          </View>
+                        </>
+                      )}
+
+                      {record.type === 'vibration' && (
+                        <>
+                          <View className={styles.reportInfoRow}>
+                            <Text className={styles.reportInfoRowKey}>振捣人员</Text>
+                            <Text className={styles.reportInfoRowVal}>
+                              {record.vibratorOnSite ? '已到位' : '未到位'}
+                            </Text>
+                          </View>
+                          <View className={styles.reportInfoRow}>
+                            <Text className={styles.reportInfoRowKey}>人员数量</Text>
+                            <Text className={styles.reportInfoRowVal}>{record.vibratorCount} 人</Text>
+                          </View>
+                        </>
+                      )}
+
+                      {record.type === 'custom' && record.remark && (
+                        <Text className={styles.reportInfoRowVal} style={{ textAlign: 'left' }}>
+                          {record.remark}
+                        </Text>
+                      )}
+
+                      <View className={styles.reportInfoRow}>
+                        <Text className={styles.reportInfoRowKey}>位置</Text>
+                        <Text className={styles.reportInfoRowVal}>{record.location || '施工现场'}</Text>
+                      </View>
+
+                      {record.remark && record.type !== 'custom' && (
+                        <Text className={styles.reportRemark}>备注：{record.remark}</Text>
+                      )}
+                    </View>
+                  </View>
+                ))}
+              </View>
             </View>
+
+            <View className={styles.reportSection}>
+              <Text className={styles.reportSectionTitle}>收盘信息</Text>
+              <View className={styles.reportInfoGrid}>
+                <View className={classnames(styles.reportInfoItem, styles.full)}>
+                  <Text className={styles.reportInfoLabel}>停歇/中断原因</Text>
+                  <Text className={styles.reportInfoValue}>
+                    {archiveInfo?.stopReason || '无停歇'}
+                  </Text>
+                </View>
+                <View className={classnames(styles.reportInfoItem, styles.full)}>
+                  <Text className={styles.reportInfoLabel}>问题处理意见</Text>
+                  <Text className={styles.reportInfoValue}>
+                    {archiveInfo?.problemHandling || '无'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View className={styles.reportSection}>
+              <Text className={styles.reportSectionTitle}>双方签认</Text>
+              <View className={styles.reportSignSection}>
+                <View className={styles.reportSignBlock}>
+                  <Text className={styles.reportSignName}>
+                    {archiveInfo?.signature?.supervisor || '张监理'}
+                  </Text>
+                  <Text className={styles.reportSignRole}>监理员</Text>
+                  <Text className={styles.reportSignDate}>
+                    {archiveInfo?.signature?.supervisorAt?.slice(0, 10) || formatDateTime(new Date()).slice(0, 10)}
+                  </Text>
+                </View>
+                <View className={styles.reportSignBlock}>
+                  <Text className={styles.reportSignName}>
+                    {archiveInfo?.signature?.worker || '施工员'}
+                  </Text>
+                  <Text className={styles.reportSignRole}>施工员</Text>
+                  <Text className={styles.reportSignDate}>
+                    {archiveInfo?.signature?.workerAt?.slice(0, 10) || formatDateTime(new Date()).slice(0, 10)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+
+          <View className={styles.reportFooter}>
+            <Button className={styles.reportFooterSecondary} onClick={() => setShowReport(false)}>
+              关闭
+            </Button>
+            <Button className={styles.reportFooterPrimary} onClick={handleBackHome}>
+              📤 提交归档
+            </Button>
           </View>
         </View>
       )}

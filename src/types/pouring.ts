@@ -24,6 +24,7 @@ export interface ProcessRecord {
   id: string
   timestamp: string
   type: 'truck' | 'slump' | 'vibration' | 'custom'
+  truckBatch?: number
   truckNumber?: string
   arrivalTime?: string
   photoUrl?: string

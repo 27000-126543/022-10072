@@ -16,8 +16,10 @@ const TimeLineItem: React.FC<TimeLineItemProps> = ({ record, onRemove }) => {
     <>
       <View className={classnames(styles.infoRow, record.photoUrl && styles.withPhoto)}>
         <View>
-          <Text className={styles.infoLabel}>车牌号</Text>
-          <Text className={styles.infoValue}>{record.truckNumber}</Text>
+          <Text className={styles.infoLabel}>车次 / 车牌</Text>
+          <Text className={styles.infoValue}>
+            第{record.truckBatch}车 · {record.truckNumber}
+          </Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Text className={styles.infoLabel}>到场时间</Text>

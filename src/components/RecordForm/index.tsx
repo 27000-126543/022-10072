@@ -29,6 +29,7 @@ const STATUS_OPTIONS: { key: RecordStatus; label: string }[] = [
 
 const RecordForm: React.FC<RecordFormProps> = ({ visible, onClose, onSubmit }) => {
   const [type, setType] = useState<RecordType>('truck')
+  const [truckBatch, setTruckBatch] = useState('')
   const [truckNumber, setTruckNumber] = useState('')
   const [arrivalTime, setArrivalTime] = useState(getCurrentTime())
   const [photoUrl, setPhotoUrl] = useState('')
@@ -42,6 +43,7 @@ const RecordForm: React.FC<RecordFormProps> = ({ visible, onClose, onSubmit }) =
 
   const resetForm = () => {
     setType('truck')
+    setTruckBatch('')
     setTruckNumber('')
     setArrivalTime(getCurrentTime())
     setPhotoUrl('')
@@ -73,7 +75,7 @@ const RecordForm: React.FC<RecordFormProps> = ({ visible, onClose, onSubmit }) =
   }
 
   const canSubmit = () => {
-    if (type === 'truck') return truckNumber.trim().length > 0
+    if (type === 'truck') return truckBatch.trim().length > 0 && truckNumber.trim().length > 0
     if (type === 'slump') return slumpValue.trim().length > 0 && isSegregation !== null
     if (type === 'vibration') return vibratorOnSite !== null
     return remark.trim().length > 0
@@ -87,7 +89,7 @@ const RecordForm: React.FC<RecordFormProps> = ({ visible, onClose, onSubmit }) =
 
     let finalStatus: RecordStatus = status
     if (type === 'slump' && slumpValue) {
-      finalStatus = evaluateSlumpStatus(parseInt(slumpValue), slumpStandard)
+      finalStatus = evaluateSlumpStatus(parseInt(slumpValue), slumpStandard, !!isSegregation)
     }
 
     const baseRecord: Omit<ProcessRecord, 'id' | 'timestamp'> = {
@@ -97,7 +99,12 @@ const RecordForm: React.FC<RecordFormProps> = ({ visible, onClose, onSubmit }) =
     }
 
     if (type === 'truck') {
-      Object.assign(baseRecord, { truckNumber, arrivalTime, photoUrl })
+      Object.assign(baseRecord, {
+        truckBatch: parseInt(truckBatch) || 0,
+        truckNumber,
+        arrivalTime,
+        photoUrl,
+      })
     } else if (type === 'slump') {
       Object.assign(baseRecord, {
         slumpValue: parseInt(slumpValue),
@@ -141,6 +148,27 @@ const RecordForm: React.FC<RecordFormProps> = ({ visible, onClose, onSubmit }) =
         <View className={styles.formBody}>
           {type === 'truck' && (
             <>
+              <View className={styles.rowFields}>
+                <View className={classnames(styles.formItem, styles.rowField)}>
+                  <Text className={styles.formLabel}><Text className={styles.required}>*</Text>车次</Text>
+                  <Input
+                    className={styles.input}
+                    type="number"
+                    placeholder="如第1车"
+                    value={truckBatch}
+                    onInput={(e) => setTruckBatch(e.detail.value)}
+                  />
+                </View>
+                <View className={classnames(styles.formItem, styles.rowField)}>
+                  <Text className={styles.formLabel}><Text className={styles.required}>*</Text>到场时间</Text>
+                  <Input
+                    className={styles.input}
+                    placeholder="HH:mm"
+                    value={arrivalTime}
+                    onInput={(e) => setArrivalTime(e.detail.value)}
+                  />
+                </View>
+              </View>
               <View className={styles.formItem}>
                 <Text className={styles.formLabel}><Text className={styles.required}>*</Text>车牌号</Text>
                 <Input
@@ -148,15 +176,6 @@ const RecordForm: React.FC<RecordFormProps> = ({ visible, onClose, onSubmit }) =
                   placeholder="请输入车牌号，如川A·12345"
                   value={truckNumber}
                   onInput={(e) => setTruckNumber(e.detail.value)}
-                />
-              </View>
-              <View className={styles.formItem}>
-                <Text className={styles.formLabel}><Text className={styles.required}>*</Text>到场时间</Text>
-                <Input
-                  className={styles.input}
-                  placeholder="HH:mm"
-                  value={arrivalTime}
-                  onInput={(e) => setArrivalTime(e.detail.value)}
                 />
               </View>
               <View className={styles.formItem}>
